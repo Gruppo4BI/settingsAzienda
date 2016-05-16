@@ -7,7 +7,6 @@ include_once 'database.php';
 require_once (METHODS_PATH . '/azienda.class.php');
 $db = Database::getInstance();
 $mysqli = $db->getConnection();
-
 ?>
 
 <!DOCTYPE html>
@@ -17,26 +16,56 @@ $mysqli = $db->getConnection();
   <?php include(TEMPLATES_PATH.'/head.php'); 
  ?>
  <script type="text/javascript">
+ function carica() {
+	    var x = document.getElementById("nazione").value;
+	    x= x.toLowerCase();
+	    x= x.replace(' ', '');
+	    if(x=='italiana'|| x=='italia'|| x=='italy')
+	    {
+	    	document.getElementById("prov").style.display="block";
+	    	if(document.getElementById("provincia").value=="")
+		    	{
+	    		document.getElementById("provincia").focus();
+	    		document.getElementById("div").style.display="block";
+	    		document.getElementById("paragrafo").innerHTML="Seleziona la provincia";
+				return false
+				}
+			else
+			{
+				return true
+			}
+		}
+	    else{
+	    	document.getElementById("prov").style.display="none";
+	    	document.getElementById("provincia").value="";
+	    	return true;
+		    }
+	    
+	}
+	</script>
+ <script type="text/javascript">
 		function myFunction() {
+			
 		    var x = document.getElementById("nazione").value;
-		    
+		 
 		    x= x.toLowerCase();
 		    x= x.replace(' ', '');
 		    if(x=='italiana'|| x=='italia'|| x=='italy')
 		    {
 		    	document.getElementById("prov").style.display="block";
-
+				
 			    }
 		    else{
 		    	document.getElementById("prov").style.display="none";
 		    	document.getElementById("provincia").value="";
+		    
 			    }
 		    
 		}
 		</script>
 </head>
 
-<body>
+<body onload="myFunction()">
 <div class="container">
 
 <?php include (TEMPLATES_PATH.'/navbar.php'); ?>
@@ -50,19 +79,19 @@ $sql = "SELECT * FROM UTENTI JOIN AZIENDE ON ID_UTENTE=ID WHERE ID='".$id."'";
 $result=$mysqli->query($sql);
 $dati=$result->fetch_assoc();
 // tutti i dati son messi nelll array dati
-
+//prendo il nome della provincia selezionato per metterlo nella dropdown come default
+$sql = "SELECT NOME FROM PROVINCE JOIN AZIENDE ON CODICE=PROVINCIA WHERE ID_UTENTE='".$id."'";
+$result=$mysqli->query($sql);
+$dati_nome=$result->fetch_assoc();
 //prendo tutte le informazioni riguradanti i contatti
 $SQLcont="SELECT * FROM CONTATTI JOIN AZIENDE ON ID_UTENTE=PROPRIETARIO WHERE PROPRIETARIO='".$id."'";
 $result_cont=$mysqli->query($SQLcont);
 // tutti i valori saranno memorizzati nell array dati_cont
 $dati_cont=$result_cont->fetch_assoc();
-
 //per sapere le province
-$SQLprov="SELECT * FROM PROVINCE WHERE CODICE='".$dati['PROVINCIA']."'";
+$SQLprov="SELECT * FROM PROVINCE WHERE NOME IS NOT NULL AND NOME<>'".$dati_nome['NOME']."';";
 $result_prov=$mysqli->query($SQLprov);
 // tutti i valori saranno memorizzati nell array dati_prov
-$dati_prov=$result_prov->fetch_assoc();
-
 // per conoscere le persone che lavorano nell azienda
 $SQLpers="SELECT NOME,COGNOME FROM PERSONE JOIN AZIENDE A ON A.ID_UTENTE=AZIENDA WHERE AZIENDA='".$id."'";
 $result_pers=$mysqli->query($SQLpers);
@@ -81,21 +110,28 @@ $result_idee=$mysqli->query($SQLidee);
 	   
 	   <div class="tab-content">
  		   <div class="tab-pane active" id="personale"><h1></h1>
-  			 <form method="post" name="registra" action="emodifica.php"  id="registra" enctype="multipart/form-data">
+  			 <form method="post" name="registra"  action="emodifica.php" onSubmit='return carica()' id="registra" enctype="multipart/form-data">
+				 <?php
+					if (isset($_GET['err']) && $_GET['err']==1)
+						echo "<div class='alert alert-warning' style='font-style: monospace; font-weight: bold;  letter-spacing:1px;'>
+									<a href='#' class='close' data-dismiss='alert' aria-label='close'>&times;</a>
+											Email già esistente.
+							</div></br>";
+				 ?>
  				 <fieldset class="form-group">
  				  <label for="Nome">Ragione Sociale</label>
     			<input type="nome" required class="form-control" id="nome" name="nome" value='<?php echo $dati["RAGIONE_SOCIALE"]; ?>' >
   				</fieldset>
-
+				
 				<fieldset class="form-group">
 				<label for="immagine">Immagine</label>
 				<input type="file"  class="form-control" name="immagine" id="immagine">
-				</fieldset>
 				
-				<!--<?php/*
+				<?php 
 					if (isset($_GET['errore']))
 					{
-						echo "<span style='color:red;>";
+						echo "<div class='alert alert-warning' style='font-style: monospace; font-weight: bold;  letter-spacing:1px;'>
+												    <a href='#' class='close' data-dismiss='alert' aria-label='close'>&times;</a>";
 						switch ($_GET['errore'])
 						{
 							case 1:
@@ -108,9 +144,11 @@ $result_idee=$mysqli->query($SQLidee);
 								echo "Impossibile caricare l'immagine.";
 							break;
 						}
-						echo "</span>";
-					}*/
-				?>-->
+						echo "</div></br>";
+					}
+				?>
+				</fieldset>
+				
 				
   				<fieldset class="form-group">
   				  <label for="cap">Cap</label>
@@ -130,16 +168,18 @@ $result_idee=$mysqli->query($SQLidee);
    				 <fieldset class="form-group">
    				 <div id='prov' class="col-sm-6 form-group" style="display: none;">
    				 <label for="provincia">Province</label>
-  				<select class="form-control"  id='provincia' >
-												<option  value="<?php  echo $province ?>" selected><?php  echo $dati_prov['NOME'];?> </option>
+  				<select class="form-control"  id='provincia' name="provincia" >
+												<option  selected><?php  echo $dati_nome['NOME'];?> </option>
 											<?php 
-													while	($row = mysqli_fetch_assoc($result) ){
-														echo"<option id='$row[CODICE]'>$row[NOME]</option>";
+													while	($row = mysqli_fetch_assoc($result_prov) ){
+														echo "<option id='$row[CODICE]'>$row[NOME]</option>";
 													}
 											?>		
 												</select> </div>
+												
+												
  				 </fieldset>
-  
+  					<div id="div" class="alert alert-warning" style="display: none;"><p id='paragrafo' class="text-alert"></p></div>
   				 <fieldset class="form-group">
   				 <label for="Regione">Regione </label>
    				 <input type="text" required class="form-control" id="regione" name="regione" value='<?php echo $dati["REGIONE"]; ?>'>
@@ -194,12 +234,12 @@ $result_idee=$mysqli->query($SQLidee);
   				
 				 <fieldset class="form-group">
     			<label for="email">Email</label>
-    			 <input type="text" class="form-control" id="email" name="email" value='<?php echo $dati["EMAIL"]; ?>'>
+    			 <input type="email" class="form-control" id="email" name="email" value='<?php echo $dati["EMAIL"]; ?>'>
   				</fieldset>
     
   				<fieldset class="form-group">
   				 <label for="parlaci">Maggiori dettagli</label>
-    			<textarea class="form-control" id="descrizione" name="descrizione" rows="3"><?php echo $dati["ddescrizione"];?></textarea>
+    			<textarea class="form-control" id="descrizione" name="descrizione" rows="3"><?php echo $dati["DESCRIZIONE"];?></textarea>
   				</fieldset>
   			</div>
    			<input id="aggiorna" value="AGGIORNA" type="submit" name="aggiorna"></td>
@@ -207,4 +247,3 @@ $result_idee=$mysqli->query($SQLidee);
  	  </div>
    </div>
 </div>
-  
