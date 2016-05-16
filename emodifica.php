@@ -23,14 +23,13 @@ $prov=$result->fetch_assoc();
 $regione = $_REQUEST["regione"];
 $p_iva=$_REQUEST["partita_iva"];
 $descrizione=$_REQUEST["descrizione"];
-//echo $_SESSION['loggeduser']->who();
+
 //aggiorno la tabella AZIENDE
 if($provincia!=null)
 	$upd_azienda="UPDATE AZIENDE SET RAGIONE_SOCIALE='$rag_soc',CAP='$cap', INDIRIZZO='$indirizzo', CITTA='$citta', NAZIONE='$nazione', REGIONE='$regione', PARTITA_IVA='$p_iva',DESCRIZIONE='$descrizione',PROVINCIA='$prov[CODICE]' where ID_UTENTE='$_SESSION[ID]'";
 else{
 	$upd_azienda="UPDATE AZIENDE SET RAGIONE_SOCIALE='$rag_soc',CAP='$cap', INDIRIZZO='$indirizzo', CITTA='$citta', NAZIONE='$nazione', REGIONE='$regione', PARTITA_IVA='$p_iva',DESCRIZIONE='$descrizione' ,PROVINCIA='ND' where ID_UTENTE='$_SESSION[ID]'";
 }
-//echo $upd_azienda;
 
 $risultato_az= $mysqli->query($upd_azienda);
 //recupero i valori della tabella CONTATTI
@@ -44,20 +43,36 @@ $twit=$_REQUEST["twitter"];
 //aggiorno la tabella CONTATTI
 $upd_contatti="UPDATE CONTATTI SET CELLULARE='$cellulare', FACEBOOK='$face',FAX='$fax',LINKEDIN='$linkedin', SITO_WEB='$sito',TELEFONO='$tel',TWITTER='$twit' where PROPRIETARIO='$_SESSION[ID]'";
 $risultato_cont= $mysqli->query($upd_contatti);
-//echo $upd_contatti;
+
 //recupero la mail e aggiorno la tabella UTENTI
 $email=$_REQUEST["email"];
-$upd_utenti="UPDATE UTENTI SET EMAIL='$email' where ID='$_SESSION[ID]'";
-$risultato_utenti= $mysqli->query($upd_utenti);
-if($risultato_utenti===false){
-	$mysqli->close();
-	header("Location: settingsAzienda.php?err=1");//email già esistente
-	exit;
+$conf_email=$_REQUEST["conf_email"];;
+if($email==$conf_email){
+	if(!empty($email) ){
+	$upd_email="UPDATE UTENTI SET EMAIL='$email' where ID='$_SESSION[ID]'";
+	$risultato_email= $mysqli->query($upd_email);
+	if($risultato_email===false){
+		$mysqli->close();
+		header("Location: settingsAzienda.php?err=1");//email giï¿½ esistente
+		exit;
+		}
+	}
+}
+//PROVA. DOVREBBE MODIFCARE LA PASSWORD DA CONTROLLARE LA CRIPTAZIONE!
+$password=$_REQUEST["password"];
+$conf_password=$_REQUEST["conf_password"];
+if($password==$conf_password){
+	if(!empty($password) ){
+		echo "aggiornato";
+		$upd_pass="UPDATE UTENTI SET PWD=PASSWORD('".$password."') where ID='$_SESSION[ID]'";
+		echo $upd_pass;
+		$risultato_pass= $mysqli->query($upd_pass);
+	}
 }
 
 //recupero valori relativi all'immagine che serviranno anche per i controlli relativi ad essa
 if ($img_name = $_FILES['immagine']['name'])
-{	//Se è stata selezionata un'immagine la modifico, altrimenti non eseguo la modifica
+{	//Se ï¿½ stata selezionata un'immagine la modifico, altrimenti non eseguo la modifica
 $img_new_name = $_SESSION['ID'].'.jpg';
 $img_temp_name = $_FILES['immagine']['tmp_name'];
 $img_dir = 'img/profile/' . $img_new_name;
@@ -97,7 +112,7 @@ if($img_err!=UPLOAD_ERR_OK)
 	exit;
 }
 else
-{ //nessun errore di compatibilità con il sistema
+{ //nessun errore di compatibilitï¿½ con il sistema
 
 //Controllo estensione  (stessi valori messi da angelo)
 	if ( !in_array($img_ext, array('jpg','jpeg','png','gif')) ) {
@@ -116,11 +131,10 @@ move_uploaded_file($img_temp_name,$img_dir);
 $sel_foto = "SELECT FOTO FROM  AZIENDE WHERE ID_UTENTE='$_SESSION[ID]'";
 $result_foto=$mysqli->query($sel_foto);
 $foto_field=$result_foto->fetch_assoc();
-if (!$foto_field['FOTO']) {  //Se il campo foto è vuoto, lo inserisco con il nome dell'immagine, ossia id.jpg
+if (!$foto_field['FOTO']) {  //Se il campo foto ï¿½ vuoto, lo inserisco con il nome dell'immagine, ossia id.jpg
 	$upd_foto="UPDATE AZIENDE SET FOTO='$img_new_name' where ID_UTENTE='$_SESSION[ID]'";
 	$result_foto= $mysqli->query($upd_foto);
 }
 }
 
-	header("location: home.php?");
-?>
+	header("location: profile_azienda.php?id=$_SESSION[ID]");
