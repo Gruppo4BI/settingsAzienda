@@ -75,27 +75,33 @@ if( !isset($_SESSION['loggeduser']) )
 // Ricavo tutte le informazioni sull azienda che mi interessa tramite l id
 $id=$_SESSION['loggeduser']->getid();
 $_SESSION['ID']=$id;
+
 $sql = "SELECT * FROM UTENTI JOIN AZIENDE ON ID_UTENTE=ID WHERE ID='".$id."'";
 $result=$mysqli->query($sql);
 $dati=$result->fetch_assoc();
 // tutti i dati son messi nelll array dati
+
 //prendo il nome della provincia selezionato per metterlo nella dropdown come default
 $sql = "SELECT NOME FROM PROVINCE JOIN AZIENDE ON CODICE=PROVINCIA WHERE ID_UTENTE='".$id."'";
 $result=$mysqli->query($sql);
 $dati_nome=$result->fetch_assoc();
+
 //prendo tutte le informazioni riguradanti i contatti
 $SQLcont="SELECT * FROM CONTATTI JOIN AZIENDE ON ID_UTENTE=PROPRIETARIO WHERE PROPRIETARIO='".$id."'";
 $result_cont=$mysqli->query($SQLcont);
 // tutti i valori saranno memorizzati nell array dati_cont
 $dati_cont=$result_cont->fetch_assoc();
+
 //per sapere le province
 $SQLprov="SELECT * FROM PROVINCE WHERE NOME IS NOT NULL AND NOME<>'".$dati_nome['NOME']."';";
 $result_prov=$mysqli->query($SQLprov);
+
 // tutti i valori saranno memorizzati nell array dati_prov
 // per conoscere le persone che lavorano nell azienda
 $SQLpers="SELECT NOME,COGNOME FROM PERSONE JOIN AZIENDE A ON A.ID_UTENTE=AZIENDA WHERE AZIENDA='".$id."'";
 $result_pers=$mysqli->query($SQLpers);
-//per le idee sviluppate dagli utenti dell azienda
+
+//per le idee sviluppate dagli utenti dellazienda
 $SQLidee="SELECT TITOLO,P.ID_UTENTE FROM IDEE JOIN PERSONE P ON CREATORE=P.ID_UTENTE JOIN AZIENDE A ON AZIENDA=A.ID_UTENTE WHERE A.ID_UTENTE='".$id."'";
 $result_idee=$mysqli->query($SQLidee);
 ?>
@@ -106,6 +112,7 @@ $result_idee=$mysqli->query($SQLidee);
         <ul class="nav nav-tabs" id="mioTab">
 		  <li class="active"><a href="#personale" data-toggle="tab">Personale</a></li>
 	      <li><a href="#contatti" data-toggle="tab">Contatti</a></li>
+	      <li><a href="#accesso" data-toggle="tab">Dati di Accesso</a></li>
 	   </ul>
 	   
 	   <div class="tab-content">
@@ -231,16 +238,38 @@ $result_idee=$mysqli->query($SQLidee);
     			<label for="sito_web">Sito web</label>
     			 <input type="text" class="form-control" id="sito_web" name="sito_web" value='<?php echo $dati_cont["SITO_WEB"]; ?>'>
   				</fieldset>
-  				
-				 <fieldset class="form-group">
-    			<label for="email">Email</label>
-    			 <input type="email" class="form-control" id="email" name="email" value='<?php echo $dati["EMAIL"]; ?>'>
-  				</fieldset>
     
   				<fieldset class="form-group">
   				 <label for="parlaci">Maggiori dettagli</label>
     			<textarea class="form-control" id="descrizione" name="descrizione" rows="3"><?php echo $dati["DESCRIZIONE"];?></textarea>
   				</fieldset>
+  			</div>
+  			<div class="tab-pane" id="accesso"><h1></h1>
+				 <fieldset class="form-group">
+    			<label for="email">Nuova Email</label>
+    			 <input type="email" class="form-control" id="email" name="email" value=''>
+  				</fieldset>
+  				
+				 <fieldset class="form-group">
+    			<label for="email">Conferma Email</label>
+    			 <input type="email" class="form-control" id="conf_email" name="conf_email" value=''>
+  				</fieldset>
+  				
+				<div class="row">
+					<div class="col-md-6">
+						<fieldset class="form-group">
+						<label>Nuova Password</label>
+						<input type="password" class="form-control" id="password" name="password" class="txtField" required>
+						</fieldset>
+					</div>
+						
+					<div class="col-md-6">							
+						<fieldset class="form-group">
+						<label>Conferma Password</label>
+						<input type="password" class="form-control" id="conf_password" name="conf_password" class="txtField" required>
+						</fieldset>
+					</div>
+				</div>
   			</div>
    			<input id="aggiorna" value="AGGIORNA" type="submit" name="aggiorna"></td>
  		 </form>
